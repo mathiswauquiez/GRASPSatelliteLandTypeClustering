@@ -1,5 +1,14 @@
 mapbox_access_token = "pk.eyJ1IjoibWF0aGlzdzU5IiwiYSI6ImNsaDZsYWs2czA3YWkzZnBlMnhtcmhyYW4ifQ.imLZJq1w2W6-yhuPQEb16Q"
 
+import matplotlib.pyplot as plt
+# import cm :
+import matplotlib.cm as cm
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import cv2
+
+
 def find_contours(im):
   contours, _ = cv2.findContours(im.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
   return contours
@@ -31,7 +40,7 @@ def im_contours_to_geojson(im, colormap = cm.viridis):
     unique_values = np.unique(im)
 
     for value in unique_values:
-        if value == fill_value or np.isnan(value):
+        if value == -1000 or np.isnan(value):
             continue
         # Create a binary image
         bin_im = (im == value).astype(np.uint8)
@@ -64,7 +73,7 @@ def im_contours_to_geojson(im, colormap = cm.viridis):
 
 def plot_categorical_variable(df, variable, colormap = cm.viridis):
     # Get the variable
-    im = get_original_shape(df[variable])
+    im = df[variable].to_numpy().reshape((180,360))
     
     geo, targets = im_contours_to_geojson(im, colormap)
 
@@ -99,6 +108,3 @@ def plot_categorical_variable(df, variable, colormap = cm.viridis):
     # Show the figure
     fig.show()
 
-df['clusters'] = df['LandPercentage'] > 1
-df['clusters'][df['clusters'] == False] = pd.NA
-plot_categorical_variable(df, 'clusters')
