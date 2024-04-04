@@ -63,7 +63,7 @@ mapbox_access_token = "pk.eyJ1IjoibWF0aGlzdzU5IiwiYSI6ImNsaDZsYWs2czA3YWkzZnBlMn
 
 def plot_variable(df, variable, colormap = cm.viridis):
 
-    cmap = lambda x : f'rgba{tuple((np.array(colormap(x)) * 255).astype(int))}' # function to convert the values to corresponding rgba code
+    cmap = lambda x : f'rgba{tuple(list((np.array(colormap(x)) * 255)[:3].astype(int)) + [128])}' # function to convert the values to corresponding rgba code
 
     mask = np.logical_not(np.isnan(df[variable])) # we only want to plot the non nan values
 
@@ -77,7 +77,7 @@ def plot_variable(df, variable, colormap = cm.viridis):
         lon=df['Longitude'][mask],
         mode='markers',
         marker=go.scattermapbox.Marker(
-            size=5,
+            size=10,
             color=viridis_colors
         ),
         text=df[variable][mask].map("Value : {:.3f}".format)
