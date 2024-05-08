@@ -60,6 +60,41 @@ import matplotlib.pyplot as plt
 
 mapbox_access_token = "pk.eyJ1IjoibWF0aGlzdzU5IiwiYSI6ImNsaDZsYWs2czA3YWkzZnBlMnhtcmhyYW4ifQ.imLZJq1w2W6-yhuPQEb16Q"
 
+import networkx as nx
+
+
+def reorder_clusters(cluster_centers, labels):
+    """ Reorder the clusters using the traveling salesman problem """
+    distance_matrix = (cluster_centers[np.newaxis, :, :] - cluster_centers[:, np.newaxis, :])**2
+    distance_matrix = np.sqrt(np.sum(distance_matrix, axis=-1))
+
+    num_points = len(cluster_centers)
+
+    G = nx.complete_graph(num_points)
+
+    # Assign distances as edge weights
+    for i in range(num_points):
+        for j in range(num_points):
+            if i != j:
+                G[i][j]['weight'] = distance_matrix[i][j]
+
+    tsp_solution = np.array(nx.approximation.traveling_salesman_problem(G, cycle=False))
+
+    tsp_edges = [(tsp_solution[i], tsp_solution[i+1]) for i in range(len(tsp_solution)-1)]
+    tsp_edges.append((tsp_solution[-1], tsp_solution[0]))  # Add edge from last node to first node to complete the cycle
+
+    clusters_center = cluster_centers.mean(axis=0)
+    farthest_cluster = np.argmax(np.linalg.norm(cluster_centers - clusters_center, axis=1))
+
+    start_idx = np.where(tsp_solution == farthest_cluster)[0][0]
+    tsp_solution = np.roll(tsp_solution, -start_idx)
+
+    new_labels = np.zeros_like(labels)
+    for i, cluster in enumerate(tsp_solution):
+        new_labels[labels == cluster] = i
+
+    return new_labels
+
 
 def plot_variable(df, variable, colormap = cm.viridis):
 
@@ -104,6 +139,11 @@ def plot_variable(df, variable, colormap = cm.viridis):
     )
 
     fig.show()
+
+def plot_clusters(df, variable, cluster_centers, colormap = cm.viridis):
+    labels = df[variable]
+    df[variable] = reorder_clusters(cluster_centers, labels)
+    plot_variable(df, variable, colormap)
 
 from matplotlib.colors import ListedColormap
 import numpy.ma as ma
